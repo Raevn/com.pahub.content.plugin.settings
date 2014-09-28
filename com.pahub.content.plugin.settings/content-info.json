@@ -1,0 +1,24 @@
+{
+    "content_id": "com.pahub.content.plugin.settings",
+    "store_id": "com.pahub.content.store.plugin",
+    "display_name": "Settings",
+    "description": "Managing settings within PA Community Hub",
+    "author": "Raevn",
+    "version": "0.0.0",
+    "date": "2014/08/28",
+    "loc_data": [
+        {
+            "locale_id": "en-us",
+            "data": {
+                "Settings_Plugin": "Settings Plugin",
+                "core-settings_description": "Core Plugin for managing settings within PA Community Hub"
+            }
+        }
+    ],
+    "resources": [
+        "com.pahub.content.plugin.settings.js"
+    ],
+    "load_func": "load_plugin_settings",
+    "unload_func": "unload_plugin_settings",
+    "enabled": true
+}

@@ -1,11 +1,11 @@
 {
     "content_id": "com.pahub.content.plugin.settings",
-    "store_id": "com.pahub.content.store.plugin",
+    "store_id": "com.pahub.content.plugin.store.plugin",
     "display_name": "Settings",
     "description": "Managing settings within PA Community Hub",
     "author": "Raevn",
-    "version": "0.0.0",
-    "date": "2014/08/28",
+    "version": "0.0.1",
+    "date": "2014/10/23",
     "loc_data": [
         {
             "locale_id": "en-us",

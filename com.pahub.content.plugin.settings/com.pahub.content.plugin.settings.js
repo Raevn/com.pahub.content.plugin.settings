@@ -1,6 +1,6 @@
 function load_plugin_settings(data, folder) {
 	pahub.api["setting"] = {
-		addSetting: function(group_id, setting_id, setting_type, default_value, min_value, max_value, available_values, display_name, callback) { model.settings.addSetting(group_id, setting_id, setting_type, default_value, min_value, max_value, available_values, display_name, callback); },
+		addSetting: function(group_id, setting_id, observable_value, setting_type, control_type, default_value, display_name, callback, params) { model.settings.addSetting(group_id, setting_id, observable_value, setting_type, control_type, default_value, /*min_value, max_value, available_values, */ display_name, callback, params); },
 		addSettingGroup: function(group_id, display_name) { model.settings.addSettingGroup(group_id, display_name); },
 		
 		//setSettingValue: function(group_id, setting_id, setting_value) {},
@@ -41,8 +41,7 @@ function load_plugin_settings(data, folder) {
 				return false;
 			}
 		},
-
-		addSetting: function(group_id, setting_id, setting_type, default_value, min_value, max_value, available_values, display_name, callback) {
+		addSetting: function(group_id, setting_id, observable_value, setting_type, control_type, default_value, display_name, callback, params) {
 			if (model.settings.settingGroupExists(group_id) == true) {
 				if (model.settings.settingExists(group_id, setting_id) == false) {
 					var group_settings = model.settings.settings()[getMapItemIndex(model.settings.settings(), "group_id", group_id)].group_settings;
@@ -50,20 +49,22 @@ function load_plugin_settings(data, folder) {
 						setting_id: setting_id,
 						group_id: group_id,
 						setting_type: setting_type,
+						control_type: control_type,
 						default_value: default_value,
-						min_value: min_value,
-						max_value: max_value,
-						available_values: ko.observableArray(available_values),
+						min_value: params["min_value"],
+						max_value: params["max_value"],
+						available_values: ko.observableArray(params["observable_available_values"]),
 						display_name: display_name,
 						loc_key: createLocKey(display_name),
-						setting_value: ko.observable(),
+						setting_value: observable_value, //check this is observable
 						callback: callback
 					});
 										
 					var setting = group_settings()[getMapItemIndex(group_settings(), "setting_id", setting_id)];
-					setting.setting_value.subscribe(function() { model.settings.settingChanged(group_id, setting_id);});
-					
-					if (model.settings.loaded_settings()[setting_id]) {
+					setting.setting_value.subscribe(function() { 
+						model.settings.settingChanged(group_id, setting_id);}
+					);
+					if (model.settings.loaded_settings().hasOwnProperty(setting_id) == true) {
 						setting.setting_value(model.settings.loaded_settings()[setting_id]);
 					} else {
 						setting.setting_value(default_value);
@@ -91,8 +92,9 @@ function load_plugin_settings(data, folder) {
 					var setting = group_settings()[getMapItemIndex(group_settings(), "setting_id", setting_id)];
 					
 					model.settings.writeSettingsFile();
-					//TODO: Check it's a function first
-					setting.callback(setting.setting_value());
+					if (typeof setting.callback == "function") {
+						setting.callback(setting.setting_value());
+					}
 				}
 			}
 		}
@@ -101,44 +103,40 @@ function load_plugin_settings(data, folder) {
 	setConstant("SETTINGS_FILE_PATH", path.join(constant.PAHUB_DATA_DIR, "pahub-settings.json"));
 	model.settings.readSettingsFile();
 
-	pahub.api.section.addSection("section-settings", "SETTINGS", path.join(folder, "settings.png"), "header", 20);
+	pahub.api.section.addSection("section-settings", "SETTINGS", path.join(folder, "settings.png"), "header", 30);
 	pahub.api.tab.addTab("section-settings", "settings", "", "", 10);
 	pahub.api.tab.setTabContent("section-settings", "settings", 
 		"<div class='heading1'>SETTINGS</div>" + 
 		"<!-- ko foreach: settings.settings -->" + 
+			"<!-- ko if: $index() > 0 -->" +
+				"<br/>" +
+			"<!-- /ko -->" +
 			"<div class='heading2' data-bind='text: model.current_loc_data()[loc_key] || display_name'></div>" + 
 			"<!-- ko foreach: group_settings -->" +
-				"<!-- ko if: setting_type == 'checkbox' -->" +
+				"<!-- ko if: control_type == 'checkbox' -->" +
 					"<div class='checkbox-wrapper'><input type='checkbox' data-bind='checked: setting_value'></input><label data-bind='click: function() {setting_value(!setting_value())}'></label></div>" + 
 					"<span data-bind='text: model.current_loc_data()[loc_key] || display_name'></span>" +
 				"<!-- /ko -->" +
-				"<!-- ko if: setting_type == 'text' -->" +
+				"<!-- ko if: control_type == 'text' -->" +
 					"<span data-bind='text: model.current_loc_data()[loc_key] || display_name'></span>" +
 					"<input data-bind='textInput: setting_value' />" + 
 				"<!-- /ko -->" +
-				"<!-- ko if: setting_type == 'password' -->" +
+				"<!-- ko if: control_type == 'password' -->" +
 					"<span data-bind='text: model.current_loc_data()[loc_key] || display_name'></span>" +
 					"<input type='password' data-bind='textInput: setting_value' />" + 
 				"<!-- /ko -->" +
-				"<!-- ko if: setting_type == 'select' -->" +
+				"<!-- ko if: control_type == 'select' -->" +
 					"<span data-bind='text: model.current_loc_data()[loc_key] || display_name'></span>" +
 					"<select data-bind='options: available_values, selectedOptions: setting_value' />" + 
 				"<!-- /ko -->" +
+				"<br/>" +
 			"<!-- /ko -->" +
 		"<!-- /ko -->"
 	);
 
 	//populate in-built settings
 	pahub.api.setting.addSettingGroup("gui", "GUI Settings");
-	pahub.api.setting.addSetting("gui", "section_minimise", "checkbox", false, null, null, null, "Minimise sidebar", function(value) { model.sections_minimised(value);});
-	
-	
-	model.sections_minimised.subscribe(function() {
-		var group_settings = model.settings.settings()[getMapItemIndex(model.settings.settings(), "group_id", "gui")].group_settings;
-		var setting = group_settings()[getMapItemIndex(group_settings(), "setting_id", "section_minimise")];
-		
-		setting.setting_value(model.sections_minimised());
-	});
+	pahub.api.setting.addSetting("gui", "section_minimise", model.sections_minimised, "boolean", "checkbox", false, "Minimise sidebar", null, {});
 }
 
 function unload_plugin_settings(data) {

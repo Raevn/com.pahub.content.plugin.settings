@@ -53,7 +53,7 @@ function load_plugin_settings(data, folder) {
 						default_value: default_value,
 						min_value: params["min_value"],
 						max_value: params["max_value"],
-						available_values: ko.observableArray(params["observable_available_values"]),
+						available_values: params["observable_available_values"],
 						display_name: display_name,
 						loc_key: createLocKey(display_name),
 						setting_value: observable_value, //check this is observable
@@ -67,7 +67,9 @@ function load_plugin_settings(data, folder) {
 					if (model.settings.loaded_settings().hasOwnProperty(setting_id) == true) {
 						setting.setting_value(model.settings.loaded_settings()[setting_id]);
 					} else {
-						setting.setting_value(default_value);
+						if (model.settings.settingValueIsValid(setting_id, default_value) == true) {
+							setting.setting_value(default_value);
+						}
 					}
 								
 				}
@@ -97,11 +99,22 @@ function load_plugin_settings(data, folder) {
 					}
 				}
 			}
+		},
+		
+		settingValueIsValid: function(setting_id, value) {
+			return true;
 		}
 	}
 	
 	setConstant("SETTINGS_FILE_PATH", path.join(constant.PAHUB_DATA_DIR, "pahub-settings.json"));
 	model.settings.readSettingsFile();
+	
+	//populate in-built settings
+	pahub.api.setting.addSettingGroup("gui", "GUI Settings");
+	pahub.api.setting.addSetting("gui", "pahub.section_minimise", model.sections_minimised, "boolean", "checkbox", false, "Minimise sidebar", null, {});
+	pahub.api.setting.addSetting("gui", "pahub.stream", model.stream, "list", "select", "STABLE", "Stream", null, {observable_available_values: model.streams});
+	pahub.api.setting.addSetting("gui", "pahub.active_section_id", model.active_section_id, "text", "text", "section-community", "active_section_id", null, {});
+	pahub.api.setting.addSetting("gui", "pahub.active_tab_id", model.active_tab_id, "text", "text", "news", "active_tab_id", null, {});
 
 	pahub.api.section.addSection("section-settings", "SETTINGS", path.join(folder, "settings.png"), "header", 30);
 	pahub.api.tab.addTab("section-settings", "settings", "", "", 10);
@@ -115,18 +128,18 @@ function load_plugin_settings(data, folder) {
 			"<!-- ko foreach: group_settings -->" +
 				"<!-- ko if: control_type == 'checkbox' -->" +
 					"<div class='checkbox-wrapper'><input type='checkbox' data-bind='checked: setting_value'></input><label data-bind='click: function() {setting_value(!setting_value())}'></label></div>" + 
-					"<span data-bind='text: model.current_loc_data()[loc_key] || display_name'></span>" +
+					"<span data-bind='text: (model.current_loc_data()[loc_key] || display_name) + \": \"'></span>" +
 				"<!-- /ko -->" +
 				"<!-- ko if: control_type == 'text' -->" +
-					"<span data-bind='text: model.current_loc_data()[loc_key] || display_name'></span>" +
+					"<span data-bind='text: (model.current_loc_data()[loc_key] || display_name) + \": \"'></span>" +
 					"<input data-bind='textInput: setting_value' />" + 
 				"<!-- /ko -->" +
 				"<!-- ko if: control_type == 'password' -->" +
-					"<span data-bind='text: model.current_loc_data()[loc_key] || display_name'></span>" +
+					"<span data-bind='text: (model.current_loc_data()[loc_key] || display_name) + \": \"'></span>" +
 					"<input type='password' data-bind='textInput: setting_value' />" + 
 				"<!-- /ko -->" +
 				"<!-- ko if: control_type == 'select' -->" +
-					"<span data-bind='text: model.current_loc_data()[loc_key] || display_name'></span>" +
+					"<span data-bind='text: (model.current_loc_data()[loc_key] || display_name) + \": \"'></span>" +
 					"<select data-bind='options: available_values, selectedOptions: setting_value' />" + 
 				"<!-- /ko -->" +
 				"<br/>" +
@@ -134,9 +147,6 @@ function load_plugin_settings(data, folder) {
 		"<!-- /ko -->"
 	);
 
-	//populate in-built settings
-	pahub.api.setting.addSettingGroup("gui", "GUI Settings");
-	pahub.api.setting.addSetting("gui", "section_minimise", model.sections_minimised, "boolean", "checkbox", false, "Minimise sidebar", null, {});
 }
 
 function unload_plugin_settings(data) {

@@ -112,11 +112,11 @@ function load_plugin_settings(data, folder) {
 	//populate in-built settings
 	pahub.api.setting.addSettingGroup("gui", "GUI Settings");
 	pahub.api.setting.addSetting("gui", "pahub.section_minimise", model.sections_minimised, "boolean", "checkbox", false, "Minimise sidebar", null, {});
-	pahub.api.setting.addSetting("gui", "pahub.stream", model.stream, "list", "select", "STABLE", "Stream", null, {observable_available_values: model.streams});
-	pahub.api.setting.addSetting("gui", "pahub.active_section_id", model.active_section_id, "text", "text", "section-community", "active_section_id", null, {});
-	pahub.api.setting.addSetting("gui", "pahub.active_tab_id", model.active_tab_id, "text", "text", "news", "active_tab_id", null, {});
+	pahub.api.setting.addSetting("gui", "pahub.stream", model.stream, "list", "select", process.platform == "linux" ? "LINUX" : "STABLE", "Stream", null, {observable_available_values: model.streams});
+	pahub.api.setting.addSetting("gui", "pahub.active_section_id", model.active_section_id, "text", null, "section-community", "active_section_id", null, {});
+	pahub.api.setting.addSetting("gui", "pahub.active_tab_id", model.active_tab_id, "text", null, "news", "active_tab_id", null, {});
 
-	pahub.api.section.addSection("section-settings", "SETTINGS", path.join(folder, "settings.png"), "header", 30);
+	pahub.api.section.addSection("section-settings", "", path.join(folder, "settings.png"), "header", 30);
 	pahub.api.tab.addTab("section-settings", "settings", "", "", 10);
 	pahub.api.tab.setTabContent("section-settings", "settings", 
 		"<div class='heading1'>SETTINGS</div>" + 
@@ -128,21 +128,24 @@ function load_plugin_settings(data, folder) {
 			"<!-- ko foreach: group_settings -->" +
 				"<!-- ko if: control_type == 'checkbox' -->" +
 					"<div class='checkbox-wrapper'><input type='checkbox' data-bind='checked: setting_value'></input><label data-bind='click: function() {setting_value(!setting_value())}'></label></div>" + 
-					"<span data-bind='text: (model.current_loc_data()[loc_key] || display_name) + \": \"'></span>" +
+					"<span data-bind='text: (model.current_loc_data()[loc_key] || display_name)'></span>" +
+					"<br/>" +
 				"<!-- /ko -->" +
 				"<!-- ko if: control_type == 'text' -->" +
 					"<span data-bind='text: (model.current_loc_data()[loc_key] || display_name) + \": \"'></span>" +
 					"<input data-bind='textInput: setting_value' />" + 
+					"<br/>" +
 				"<!-- /ko -->" +
 				"<!-- ko if: control_type == 'password' -->" +
 					"<span data-bind='text: (model.current_loc_data()[loc_key] || display_name) + \": \"'></span>" +
 					"<input type='password' data-bind='textInput: setting_value' />" + 
+					"<br/>" +
 				"<!-- /ko -->" +
 				"<!-- ko if: control_type == 'select' -->" +
 					"<span data-bind='text: (model.current_loc_data()[loc_key] || display_name) + \": \"'></span>" +
 					"<select data-bind='options: available_values, selectedOptions: setting_value' />" + 
+					"<br/>" +
 				"<!-- /ko -->" +
-				"<br/>" +
 			"<!-- /ko -->" +
 		"<!-- /ko -->"
 	);

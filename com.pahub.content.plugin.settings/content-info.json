@@ -4,8 +4,8 @@
     "display_name": "Settings",
     "description": "Manages settings and setting persistance within PA Community Hub",
     "author": "Raevn",
-    "version": "0.2.0",
-    "date": "2014/11/04",
+    "version": "0.2.1",
+    "date": "2014/11/24",
     "resources": [
         "com.pahub.content.plugin.settings.js"
     ],
